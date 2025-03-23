@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>單詞拼寫遊戲（中文版）</title>
+    <title>單詞默寫遊戲3221048</title>
     <style>
         body {
             font-family: Arial, "Microsoft YaHei", sans-serif;
@@ -183,7 +183,7 @@
             mode = selectedMode;
             startTime = new Date();
             appearedWords = [];
-            isMobile = window.innerWidth <= 600; // 檢查是否為手機模式
+            isMobile = window.innerWidth <= 600;
 
             if (mode === 'computer') {
                 document.getElementById('countSelection').classList.add('hidden');
@@ -199,7 +199,12 @@
             } else {
                 document.getElementById('modeSelection').classList.add('hidden');
                 document.getElementById('handwritePage').classList.remove('hidden');
-                nextWordHandwrite();
+                // 手機模式下不自動讀第一個單詞
+                if (!isMobile) {
+                    nextWordHandwrite();
+                } else {
+                    selectFirstWordHandwrite();
+                }
             }
         }
 
@@ -237,7 +242,21 @@
             }
         }
 
-        // 手寫模式
+        // 手寫模式 - 手機模式下首次選擇單詞但不讀
+        function selectFirstWordHandwrite() {
+            if (words.length === 0) {
+                endGame();
+                return;
+            }
+            const randomIndex = Math.floor(Math.random() * words.length);
+            currentWord = words[randomIndex];
+            appearedWords.push(currentWord);
+            words.splice(randomIndex, 1);
+            document.getElementById('currentWordHandwrite').textContent = '請聽單詞';
+            // 不自動讀，等待按“下一題”
+        }
+
+        // 手寫模式 - 下一題
         function nextWordHandwrite() {
             if (words.length === 0) {
                 endGame();
@@ -248,10 +267,7 @@
             appearedWords.push(currentWord);
             words.splice(randomIndex, 1);
             document.getElementById('currentWordHandwrite').textContent = '請聽單詞';
-            // 手機模式下不自動讀，等待按“下一題”
-            if (!isMobile) {
-                speakWord();
-            }
+            speakWord(); // 按“下一題”後讀出新單詞
         }
 
         // 通用語音函數（使用粵語）
