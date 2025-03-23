@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>拼寫學習遊戲</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .container {
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .shape-box {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            border: 2px solid #000;
+            line-height: 200px;
+        }
+        .input-box {
+            margin: 20px;
+        }
+        input {
+            padding: 5px;
+            font-size: 16px;
+        }
+        #message {
+            color: red;
+            height: 20px;
+        }
+        #fireworks {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 id="stageTitle"></h2>
+        <div id="shapeCanvas" class="shape-box"></div>
+        <div id="textDisplay" class="shape-box" style="display: none;"></div>
+        <div class="input-box">
+            <input type="text" id="answerInput" placeholder="請輸入英文拼寫">
+            <button onclick="checkAnswer()">提交</button>
+        </div>
+        <div id="message"></div>
+    </div>
+    <canvas id="fireworks"></canvas>
+
+    <!-- 引入 Three.js 和 OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        const shapes = [
+            {name: 'prism', create: (scene) => {
+                const sides = Math.random() < 0.5 ? 3 : 4;
+                const geometry = new THREE.CylinderGeometry(40, 40, 80, sides);
+                const materials = [
+                    new THREE.MeshBasicMaterial({color: 0xffff00}),
+                    new THREE.MeshBasicMaterial({color: 0x0000ff}),
+                    new THREE.MeshBasicMaterial({color: 0xff0000})
+                ];
+                const prism = new THREE.Mesh(geometry, materials);
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
+                prism.add(line);
+                return prism;
+            }},
+            {name: 'cylinder', create: (scene) => {
+                const geometry = new THREE.CylinderGeometry(40, 40, 100, 32);
+                const materials = [
+                    new THREE.MeshBasicMaterial({color: 0xffff00}),
+                    new THREE.MeshBasicMaterial({color: 0x0000ff}),
+                    new THREE.MeshBasicMaterial({color: 0xff0000})
+                ];
+                const cylinder = new THREE.Mesh(geometry, materials);
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
+                cylinder.add(line);
+                return cylinder;
+            }},
+            {name: 'cone', create: (scene) => {
+                const geometry = new THREE.ConeGeometry(50, 100, 32);
+                const materials = [
+                    new THREE.MeshBasicMaterial({color: 0xffff00}),
+                    new THREE.MeshBasicMaterial({color: 0x0000ff}),
+                    new THREE.MeshBasicMaterial({color: 0xff0000})
+                ];
+                const cone = new THREE.Mesh(geometry, materials);
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
+                cone.add(line);
+                cone.rotation.x = Math.PI / 6; // 初始旋轉30度
+                return cone;
+            }},
+            {name: 'sphere', create: (scene) => {
+                const geometry = new THREE.SphereGeometry(50, 32, 32);
+                const material = new THREE.MeshBasicMaterial({color: 0xff0000});
+                const sphere = new THREE.Mesh(geometry, material);
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
+                sphere.add(line);
+                return sphere;
+            }},
+            {name: 'pyramid', create: (scene) => {
+                const geometry = new THREE.ConeGeometry(50, 100, 4);
+                const materials = [
+                    new THREE.MeshBasicMaterial({color: 0xffff00}),
+                    new THREE.MeshBasicMaterial({color: 0x0000ff}),
+                    new THREE.MeshBasicMaterial({color: 0xff0000})
+                ];
+                const pyramid = new THREE.Mesh(geometry, materials);
+                const edges = new THREE.EdgesGeometry(geometry);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color: 0x000000}));
+                pyramid.add(line);
+                return pyramid;
+            }}
+        ];
+
+        const months = [
+            {display: '一月', answer: 'january'},
+            {display: '二月', answer: 'february'},
+            {display: '三月', answer: 'march'},
+            {display: '四月', answer: 'april'},
+            {display: '五月', answer: 'may'},
+            {display: '六月', answer: 'june'},
+            {display: '七月', answer: 'july'},
+            {display: '八月', answer: 'august'},
+            {display: '九月', answer: 'september'},
+            {display: '十月', answer: 'october'},
+            {display: '十一月', answer: 'november'},
+            {display: '十二月', answer: 'december'}
+        ];
+        
+        const days = [
+            {display: '星期一', answer: 'monday'},
+            {display: '星期二', answer: 'tuesday'},
+            {display: '星期三', answer: 'wednesday'},
+            {display: '星期四', answer: 'thursday'},
+            {display: '星期五', answer: 'friday'},
+            {display: '星期六', answer: 'saturday'},
+            {display: '星期日', answer: 'sunday'}
+        ];
+
+        let currentList = [];
+        let currentIndex = 0;
+        let wrongAnswers = [];
+        let startTime = new Date();
+        let stage = 1;
+        let scene, camera, renderer, currentObject, controls;
+
+        // 初始化 Three.js 和 OrbitControls
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(200, 200);
+            const canvasContainer = document.getElementById('shapeCanvas');
+            canvasContainer.appendChild(renderer.domElement);
+            
+            // 設置初始視角
+            camera.position.set(100, 100, 100);
+            camera.lookAt(0, 0, 0);
+            
+            // 添加 OrbitControls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = false; // 禁用縮放
+            controls.enablePan = false;  // 禁用平移
+            controls.minDistance = 100;  // 設置最小距離
+            controls.maxDistance = 200;  // 設置最大距離
+            
+            // 動畫循環
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        // 隨機排序函數
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function updateStageTitle() {
+            const title = document.getElementById('stageTitle');
+            if (stage === 1) title.textContent = '第一關：幾何圖形';
+            else if (stage === 2) title.textContent = '第二關：月份';
+            else if (stage === 3) title.textContent = '第三關：星期';
+        }
+
+        function drawShape() {
+            if (stage === 1) {
+                document.getElementById('shapeCanvas').style.display = 'block';
+                document.getElementById('textDisplay').style.display = 'none';
+                if (currentObject) scene.remove(currentObject);
+                currentObject = currentList[currentIndex].create(scene);
+                scene.add(currentObject);
+                // 重置相機位置
+                camera.position.set(100, 100, 100);
+                controls.reset();
+            } else {
+                document.getElementById('shapeCanvas').style.display = 'none';
+                document.getElementById('textDisplay').style.display = 'block';
+                document.getElementById('textDisplay').textContent = currentList[currentIndex].display;
+            }
+        }
+
+        function checkAnswer() {
+            const input = document.getElementById('answerInput').value.toLowerCase().trim();
+            const correctAnswer = stage === 1 ? 
+                currentList[currentIndex].name : 
+                currentList[currentIndex].answer;
+            
+            if (input === correctAnswer) {
+                currentIndex++;
+                document.getElementById('answerInput').value = '';
+                document.getElementById('message').textContent = '';
+                
+                if (currentIndex >= currentList.length) {
+                    if (stage === 1) {
+                        stage = 2;
+                        currentList = shuffle([...months]);
+                        currentIndex = 0;
+                    } else if (stage === 2) {
+                        stage = 3;
+                        currentList = shuffle([...days]);
+                        currentIndex = 0;
+                    } else {
+                        endGame();
+                        return;
+                    }
+                    updateStageTitle();
+                }
+                drawShape();
+            } else {
+                document.getElementById('message').textContent = '你答錯了，請重試';
+                document.getElementById('answerInput').value = '';
+                if (!wrongAnswers.includes(correctAnswer)) {
+                    wrongAnswers.push(correctAnswer);
+                }
+            }
+        }
+
+        function endGame() {
+            const endTime = new Date();
+            const timeTaken = Math.round((endTime - startTime) / 1000);
+            let result = `恭喜完成！<br>用時：${timeTaken}秒<br>`;
+            if (wrongAnswers.length > 0) {
+                result += `答錯的題目：${wrongAnswers.join(', ')}`;
+            } else {
+                result += '全部正確！';
+            }
+            document.querySelector('.container').innerHTML = result;
+            showFireworks();
+        }
+
+        function showFireworks() {
+            const canvas = document.getElementById('fireworks');
+            canvas.style.display = 'block';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext('2d');
+            
+            function animate() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+                gradient.addColorStop(0, 'red');
+                gradient.addColorStop(0.2, 'orange');
+                gradient.addColorStop(0.4, 'yellow');
+                gradient.addColorStop(0.6, 'green');
+                gradient.addColorStop(0.8, 'blue');
+                gradient.addColorStop(1, 'purple');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 20, canvas.width, 40);
+                if (Math.random() > 0.7) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 20, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    ctx.fill();
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 初始化遊戲
+        initThreeJS();
+        currentList = shuffle([...shapes]);
+        updateStageTitle();
+        drawShape();
+        
+        // 允許按Enter提交
+        document.getElementById('answerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+    </script>
+</body>
+</html>
