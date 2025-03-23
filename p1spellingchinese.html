@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>詞語學習工具323257</title>
+    <title>詞語學習工具323303</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,7 +58,14 @@
             margin: 20px 0;
             font-size: 1.2em;
         }
-        @media (max-width: 480px) {
+        /* 表格中的播放按鈕樣式 */
+        .play-button {
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        /* 移動設備上的調整 */
+        @media (max-width: 768px) {
             h1 {
                 font-size: 1.5em;
             }
@@ -69,6 +76,13 @@
             th, td {
                 padding: 6px;
                 font-size: 0.9em;
+            }
+            /* 放大表格中的播放按鈕 */
+            .play-button {
+                padding: 12px 24px;
+                font-size: 16px;
+                width: 100%;
+                box-sizing: border-box;
             }
         }
     </style>
@@ -135,7 +149,7 @@
                 '<table><tr><th>詞語</th><th>發音</th></tr>';
 
             wordsArray.forEach(word => {
-                tableHtml += `<tr><td>${word}</td><td><button onclick="speak('${word}')">播放</button></td></tr>`;
+                tableHtml += `<tr><td>${word}</td><td><button class="play-button" onclick="speak('${word}')">播放</button></td></tr>`;
             });
             tableHtml += '</table>';
 
@@ -151,14 +165,12 @@
             let selectedVoice;
 
             if (/[\u4e00-\u9fff]/.test(text)) {
-                // 粵語語音選擇
                 selectedVoice = voices.find(voice => 
                     (voice.lang === 'zh-HK' || voice.lang === 'zh-Yue') && 
                     (voice.name.includes('Siri') || voice.name.includes('Mei') || voice.localService)
-                ) || voices.find(voice => voice.lang.startsWith('zh')); // 回退到其他中文
+                ) || voices.find(voice => voice.lang.startsWith('zh'));
                 utterance.lang = 'zh-HK';
             } else {
-                // 英語女聲選擇
                 selectedVoice = voices.find(voice => 
                     (voice.lang === 'en-US' || voice.lang === 'en-GB') && 
                     (voice.name.includes('Samantha') || 
@@ -168,7 +180,7 @@
                      voice.name.includes('Siri') && voice.localService)
                 ) || voices.find(voice => 
                     (voice.lang === 'en-US' || voice.lang === 'en-GB') && voice.localService
-                ) || voices.find(voice => voice.lang.startsWith('en')); // 回退到其他英文
+                ) || voices.find(voice => voice.lang.startsWith('en'));
                 utterance.lang = 'en-US';
             }
 
@@ -178,12 +190,10 @@
                 console.warn('未找到合適的女聲，使用默認語音');
             }
 
-            // 設置自然語速和音調
-            utterance.rate = 0.95;  // 稍微慢一點，更自然
-            utterance.pitch = 1.1;  // 略高音調，模擬女聲特性
-            utterance.volume = 1.0; // 音量
+            utterance.rate = 0.95;
+            utterance.pitch = 1.1;
+            utterance.volume = 1.0;
 
-            // 清除之前的語音並播放
             speechSynthesis.cancel();
             speechSynthesis.speak(utterance);
         }
