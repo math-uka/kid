@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>詞語學習工具</title>
+    <title>詞語學習工具323257</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -98,10 +98,33 @@
         let wordsArray = [];
         let quizArray = [];
         let currentIndex = 0;
+        let voices = [];
+        let voicesLoaded = false;
+
+        // 加載語音列表
+        function loadVoices() {
+            return new Promise((resolve) => {
+                voices = speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    voicesLoaded = true;
+                    resolve();
+                } else {
+                    speechSynthesis.onvoiceschanged = () => {
+                        voices = speechSynthesis.getVoices();
+                        voicesLoaded = true;
+                        resolve();
+                    };
+                }
+            });
+        }
+
+        // 初始化時加載語音
+        window.onload = () => {
+            loadVoices();
+        };
 
         function generateTable() {
             const input = document.getElementById('inputText').value;
-            // 使用正則表達式分割，支持英文逗號和中文逗號
             wordsArray = input.split(/[,，]/).map(item => item.trim()).filter(item => item !== '');
             
             let tableHtml = '<div class="button-group">' +
@@ -119,13 +142,49 @@
             document.getElementById('tableContainer').innerHTML = tableHtml;
         }
 
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            if (/[\u4e00-\u9fff]/.test(text)) {
-                utterance.lang = 'zh-HK'; // 粵語
-            } else {
-                utterance.lang = 'en-US'; // 英文
+        async function speak(text) {
+            if (!voicesLoaded) {
+                await loadVoices();
             }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            let selectedVoice;
+
+            if (/[\u4e00-\u9fff]/.test(text)) {
+                // 粵語語音選擇
+                selectedVoice = voices.find(voice => 
+                    (voice.lang === 'zh-HK' || voice.lang === 'zh-Yue') && 
+                    (voice.name.includes('Siri') || voice.name.includes('Mei') || voice.localService)
+                ) || voices.find(voice => voice.lang.startsWith('zh')); // 回退到其他中文
+                utterance.lang = 'zh-HK';
+            } else {
+                // 英語女聲選擇
+                selectedVoice = voices.find(voice => 
+                    (voice.lang === 'en-US' || voice.lang === 'en-GB') && 
+                    (voice.name.includes('Samantha') || 
+                     voice.name.includes('Victoria') || 
+                     voice.name.includes('Karen') || 
+                     voice.name.includes('Female') || 
+                     voice.name.includes('Siri') && voice.localService)
+                ) || voices.find(voice => 
+                    (voice.lang === 'en-US' || voice.lang === 'en-GB') && voice.localService
+                ) || voices.find(voice => voice.lang.startsWith('en')); // 回退到其他英文
+                utterance.lang = 'en-US';
+            }
+
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            } else {
+                console.warn('未找到合適的女聲，使用默認語音');
+            }
+
+            // 設置自然語速和音調
+            utterance.rate = 0.95;  // 稍微慢一點，更自然
+            utterance.pitch = 1.1;  // 略高音調，模擬女聲特性
+            utterance.volume = 1.0; // 音量
+
+            // 清除之前的語音並播放
+            speechSynthesis.cancel();
             speechSynthesis.speak(utterance);
         }
 
