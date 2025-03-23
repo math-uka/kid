@@ -95,8 +95,16 @@
         <!-- 模式選擇 -->
         <div id="modeSelection" class="hidden">
             <h2>選擇拼寫方式</h2>
-            <button onclick="startGame('computer')">電腦拼寫</button>
+            <button onclick="showCountSelection()">電腦拼寫</button>
             <button onclick="startGame('handwrite')">手寫</button>
+        </div>
+
+        <!-- 電腦模式數量選擇 -->
+        <div id="countSelection" class="hidden">
+            <h2>選擇默寫數量</h2>
+            <button onclick="startGame('computer', 10)">默寫10個</button>
+            <button onclick="startGame('computer', 'half')">默寫一半</button>
+            <button onclick="startGame('computer', 'all')">默寫全部</button>
         </div>
 
         <!-- 電腦拼寫頁面 -->
@@ -115,6 +123,7 @@
             <h2 id="currentWordHandwrite"></h2>
             <button onclick="speakWord()">重讀</button>
             <button onclick="nextWordHandwrite()">下一題</button>
+            <button onclick="endGame()">即時結束</button>
         </div>
 
         <!-- 結束頁面 -->
@@ -132,6 +141,8 @@
         let wrongWords = [];
         let startTime;
         let mode = '';
+        let appearedWords = [];
+        let totalWordsToSpell = 0;
 
         // Enter 鍵監聽
         document.addEventListener('keydown', function(event) {
@@ -151,18 +162,43 @@
                 alert('請輸入至少一個單詞！');
                 return;
             }
+            // 確保只顯示模式選擇頁面
             document.getElementById('startPage').classList.add('hidden');
             document.getElementById('modeSelection').classList.remove('hidden');
+            document.getElementById('countSelection').classList.add('hidden');
+            document.getElementById('computerPage').classList.add('hidden');
+            document.getElementById('handwritePage').classList.add('hidden');
+            document.getElementById('endPage').classList.add('hidden');
         }
 
-        function startGame(selectedMode) {
-            mode = selectedMode;
+        function showCountSelection() {
+            // 確保只顯示數量選擇頁面
             document.getElementById('modeSelection').classList.add('hidden');
+            document.getElementById('countSelection').classList.remove('hidden');
+            document.getElementById('computerPage').classList.add('hidden');
+            document.getElementById('handwritePage').classList.add('hidden');
+            document.getElementById('endPage').classList.add('hidden');
+        }
+
+        function startGame(selectedMode, countOption) {
+            mode = selectedMode;
             startTime = new Date();
+            appearedWords = [];
+
             if (mode === 'computer') {
+                document.getElementById('countSelection').classList.add('hidden');
+                // 根據選擇確定默寫數量
+                if (countOption === 10) {
+                    totalWordsToSpell = Math.min(10, words.length);
+                } else if (countOption === 'half') {
+                    totalWordsToSpell = Math.ceil(words.length / 2);
+                } else { // 'all'
+                    totalWordsToSpell = words.length;
+                }
                 document.getElementById('computerPage').classList.remove('hidden');
                 nextWordComputer();
             } else {
+                document.getElementById('modeSelection').classList.add('hidden');
                 document.getElementById('handwritePage').classList.remove('hidden');
                 nextWordHandwrite();
             }
@@ -170,13 +206,14 @@
 
         // 電腦拼寫模式
         function nextWordComputer() {
-            if (words.length === 0) {
+            if (totalWordsToSpell <= 0 || words.length === 0) {
                 endGame();
                 return;
             }
             const randomIndex = Math.floor(Math.random() * words.length);
             currentWord = words[randomIndex];
             words.splice(randomIndex, 1);
+            totalWordsToSpell--;
             document.getElementById('currentWordComputer').textContent = '請聽單詞';
             document.getElementById('spellInput').value = '';
             document.getElementById('hint').textContent = '';
@@ -185,8 +222,8 @@
         }
 
         function checkSpelling() {
-            const input = document.getElementById('spellInput').value.trim().toLowerCase();
-            if (input === currentWord.toLowerCase()) {
+            const input = document.getElementById('spellInput').value.trim();
+            if (input.toLowerCase() === currentWord.toLowerCase()) {
                 nextWordComputer();
             } else {
                 errorCount++;
@@ -209,6 +246,7 @@
             }
             const randomIndex = Math.floor(Math.random() * words.length);
             currentWord = words[randomIndex];
+            appearedWords.push(currentWord);
             words.splice(randomIndex, 1);
             document.getElementById('currentWordHandwrite').textContent = '請聽單詞';
             speakWord();
@@ -249,11 +287,19 @@
             document.getElementById('endPage').classList.remove('hidden');
             
             const endMessage = document.getElementById('endMessage');
-            endMessage.innerHTML = `
-                <h1 class="rainbow">恭喜完成！</h1>
-                <p>總共用時：${timeDiff} 秒</p>
-                ${mode === 'computer' ? `<p>答錯的單詞：${wrongWords.length > 0 ? wrongWords.join(', ') : '無'}</p>` : ''}
-            `;
+            
+            if (mode === 'computer') {
+                endMessage.innerHTML = `
+                    <h1 class="rainbow">恭喜完成！</h1>
+                    <p>總共用時：${timeDiff} 秒</p>
+                    <p>答錯的單詞：${wrongWords.length > 0 ? wrongWords.join(', ') : '無'}</p>
+                `;
+            } else {
+                endMessage.innerHTML = `
+                    <h1 class="rainbow">恭喜完成！</h1>
+                    ${appearedWords.length > 0 ? `<p>出現的單詞：${appearedWords.join(', ')}</p>` : '<p>無單詞出現</p>'}
+                `;
+            }
             endMessage.classList.remove('hidden');
             
             launchFireworks();
