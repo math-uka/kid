@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>詞語學習工具323303</title>
+    <title>詞語學習工具323442</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,13 +58,11 @@
             margin: 20px 0;
             font-size: 1.2em;
         }
-        /* 表格中的播放按鈕樣式 */
         .play-button {
             padding: 6px 12px;
             font-size: 14px;
             cursor: pointer;
         }
-        /* 移動設備上的調整 */
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.5em;
@@ -77,7 +75,6 @@
                 padding: 6px;
                 font-size: 0.9em;
             }
-            /* 放大表格中的播放按鈕 */
             .play-button {
                 padding: 12px 24px;
                 font-size: 16px;
@@ -190,8 +187,9 @@
                 console.warn('未找到合適的女聲，使用默認語音');
             }
 
-            utterance.rate = 0.95;
-            utterance.pitch = 1.1;
+            // 調整為更慢、更自然的語速
+            utterance.rate = 0.7;  // 比正常語速慢 30%，確保自然且清晰
+            utterance.pitch = 1.1; // 保持女聲音調
             utterance.volume = 1.0;
 
             speechSynthesis.cancel();
