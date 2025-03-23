@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>詞語學習工具323442</title>
+    <title>詞語學習工具323448</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -89,7 +89,7 @@
         <h1>詞語學習工具</h1>
         
         <div id="mainContainer">
-            <textarea id="inputText" rows="4" placeholder="請輸入文字或句子，以逗號(,)或中文逗號(，)分隔"></textarea>
+            <textarea id="inputText" rows="4" placeholder="請輸入文字或句子，以句號(. 或 .)、問號(? 或 ？)、感嘆號(! 或 ！)分隔"></textarea>
             <button onclick="generateTable()">生成表格</button>
             <div id="tableContainer"></div>
         </div>
@@ -136,7 +136,8 @@
 
         function generateTable() {
             const input = document.getElementById('inputText').value;
-            wordsArray = input.split(/[,，]/).map(item => item.trim()).filter(item => item !== '');
+            // 使用正則表達式分隔，保留問號和感嘆號
+            wordsArray = input.split(/(?<=[.。]|[!?！])/).map(item => item.trim()).filter(item => item !== '');
             
             let tableHtml = '<div class="button-group">' +
                 '<button onclick="startQuiz(5)">抽問5個</button>' +
@@ -146,7 +147,12 @@
                 '<table><tr><th>詞語</th><th>發音</th></tr>';
 
             wordsArray.forEach(word => {
-                tableHtml += `<tr><td>${word}</td><td><button class="play-button" onclick="speak('${word}')">播放</button></td></tr>`;
+                // 如果以問號或感嘆號結尾，保留標點；以句號結尾則移除
+                let displayText = word;
+                if (displayText.endsWith('.') || displayText.endsWith('。')) {
+                    displayText = displayText.slice(0, -1); // 移除句號
+                }
+                tableHtml += `<tr><td>${displayText}</td><td><button class="play-button" onclick="speak('${word}')">播放</button></td></tr>`;
             });
             tableHtml += '</table>';
 
@@ -187,9 +193,8 @@
                 console.warn('未找到合適的女聲，使用默認語音');
             }
 
-            // 調整為更慢、更自然的語速
-            utterance.rate = 0.7;  // 比正常語速慢 30%，確保自然且清晰
-            utterance.pitch = 1.1; // 保持女聲音調
+            utterance.rate = 0.7;  // 慢速自然語速
+            utterance.pitch = 1.1; // 女聲音調
             utterance.volume = 1.0;
 
             speechSynthesis.cancel();
@@ -236,7 +241,11 @@
             document.getElementById('currentWord').textContent = '全部結束！';
             let resultHtml = '<h3>剛剛的詞語：</h3><ul>';
             quizArray.forEach(word => {
-                resultHtml += `<li>${word}</li>`;
+                let displayText = word;
+                if (displayText.endsWith('.') || displayText.endsWith('。')) {
+                    displayText = displayText.slice(0, -1); // 移除句號
+                }
+                resultHtml += `<li>${displayText}</li>`;
             });
             resultHtml += '</ul>';
             document.getElementById('resultContainer').innerHTML = resultHtml;
