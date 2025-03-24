@@ -3,284 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小學加減法練習</title>
+    <title>小朋友加減法遊戲</title>
     <style>
         body {
-            text-align: center;
             font-family: Arial, sans-serif;
-            padding: 10px;
-            margin: 0;
-        }
-        #completion-message {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: white;
-            padding: 10px 20px;
-            border: 2px solid black;
-            font-weight: bold;
-            font-size: 20px;
-            z-index: 1000;
-            display: none;
-        }
-        #problem {
-            font-size: 24px;
-            margin: 20px 0;
-        }
-        #input-area {
-            display: flex;
-            justify-content: space-between;
-            max-width: 300px;
-            margin: 0 auto 20px;
-        }
-        #answer {
-            width: 60%;
-            padding: 10px;
-            font-size: 16px;
             text-align: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-        #submit-btn {
-            width: 30%;
+        #score {
+            font-size: 1.8em;
+            margin: 15px 0;
+            color: #333;
+        }
+        #question {
+            font-size: 2.8em;
+            margin: 20px 0;
+            color: #2196F3;
+            font-weight: bold;
+            word-wrap: break-word;
+        }
+        #inputArea {
+            margin: 25px 0;
+            width: 100%;
+            max-width: 500px; /* 限制最大寬度 */
+            display: grid;
+            grid-template-areas: 
+                "input submit"
+                "tens units";
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        #answerInput {
+            grid-area: input;
+            font-size: 1.6em;
+            width: 90px;
             padding: 10px;
-            font-size: 16px;
-            background-color: #4CAF50;
+            text-align: center;
+            margin: 0;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            justify-self: center;
+        }
+        #submitBtn {
+            grid-area: submit;
+            padding: 12px 40px;
+            font-size: 1.3em;
+            background-color: #2196F3;
             color: white;
             border: none;
+            border-radius: 8px;
             cursor: pointer;
+            touch-action: manipulation;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+            justify-self: center;
         }
-        #keyboard {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            max-width: 300px;
-            margin: 0 auto;
+        #submitBtn:hover {
+            background-color: #1e88e5;
+        }
+        #tens {
+            grid-area: tens;
+        }
+        #units {
+            grid-area: units;
+        }
+        .number-group {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            height: 260px;
+        }
+        .number-group label {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            display: block;
+            color: #555;
         }
         .number-pad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
+            gap: 8px;
+            width: 180px;
         }
         .number-btn {
-            padding: 15px;
-            font-size: 18px;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
             cursor: pointer;
+            touch-action: manipulation;
+            transition: background-color 0.2s;
+        }
+        .number-btn.selected {
+            background-color: #808080;
         }
         .number-btn:hover {
-            background-color: #ddd;
+            background-color: #45a049;
         }
-        .pad-label {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        #score-display {
-            margin: 10px 0;
+        .empty-btn {
+            width: 50px;
+            height: 50px;
+            background: transparent;
+            border: none;
+            pointer-events: none;
         }
         #message {
-            margin: 10px 0;
             color: red;
+            font-size: 1.3em;
+            margin: 15px 0;
+            min-height: 25px;
         }
-        canvas {
+        #fireworks {
             position: fixed;
             top: 0;
             left: 0;
-            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            z-index: 1000;
+            color: white;
+            font-size: 2em;
+            padding-top: 20%;
+            text-align: center;
         }
         @media (max-width: 600px) {
-            #problem {
-                font-size: 20px;
+            #score {
+                font-size: 1.5em;
             }
-            #answer, #submit-btn {
-                padding: 8px;
+            #question {
+                font-size: 2.2em;
             }
-            .number-btn {
-                padding: 12px;
-                font-size: 16px;
+            #answerInput {
+                width: 80px;
+                font-size: 1.4em;
             }
-            .pad-label {
-                font-size: 14px;
+            #submitBtn {
+                padding: 10px 30px;
+                font-size: 1.2em;
+            }
+            .number-pad {
+                width: 150px;
+                gap: 6px;
+            }
+            .number-btn, .empty-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1em;
+            }
+            .number-group {
+                height: 220px;
+                padding: 10px;
+            }
+            #message {
+                font-size: 1.1em;
+            }
+            #inputArea {
+                grid-template-areas: 
+                    "input submit"
+                    "tens units";
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
             }
         }
     </style>
 </head>
 <body>
-    <div id="completion-message"></div>
-    <h1>加減法練習</h1>
-    <div id="problem"></div>
-    <div id="input-area">
-        <input type="number" id="answer" readonly>
-        <button id="submit-btn" onclick="checkAnswer()">確定</button>
+    <div id="score">得分: 0</div>
+    <div id="question"></div>
+    <div id="inputArea">
+        <input type="number" id="answerInput" maxlength="2" onkeypress="if(event.key === 'Enter') checkAnswer()">
+        <button id="submitBtn" onclick="checkAnswer()">確定</button>
+        <div id="tens" class="number-group">
+            <label>十位數:</label>
+            <div class="number-pad">
+                <button class="number-btn" onclick="setNumber('tens', 1)">1</button>
+                <button class="number-btn" onclick="setNumber('tens', 2)">2</button>
+                <button class="number-btn" onclick="setNumber('tens', 3)">3</button>
+                <button class="number-btn" onclick="setNumber('tens', 4)">4</button>
+                <button class="number-btn" onclick="setNumber('tens', 5)">5</button>
+                <button class="number-btn" onclick="setNumber('tens', 6)">6</button>
+                <button class="number-btn" onclick="setNumber('tens', 7)">7</button>
+                <button class="number-btn" onclick="setNumber('tens', 8)">8</button>
+                <button class="number-btn" onclick="setNumber('tens', 9)">9</button>
+                <button class="empty-btn" style="grid-column: 2;"></button>
+            </div>
+        </div>
+        <div id="units" class="number-group">
+            <label>個位數:</label>
+            <div class="number-pad">
+                <button class="number-btn" onclick="setNumber('units', 1)">1</button>
+                <button class="number-btn" onclick="setNumber('units', 2)">2</button>
+                <button class="number-btn" onclick="setNumber('units', 3)">3</button>
+                <button class="number-btn" onclick="setNumber('units', 4)">4</button>
+                <button class="number-btn" onclick="setNumber('units', 5)">5</button>
+                <button class="number-btn" onclick="setNumber('units', 6)">6</button>
+                <button class="number-btn" onclick="setNumber('units', 7)">7</button>
+                <button class="number-btn" onclick="setNumber('units', 8)">8</button>
+                <button class="number-btn" onclick="setNumber('units', 9)">9</button>
+                <button class="number-btn" onclick="setNumber('units', 0)" style="grid-column: 2;">0</button>
+            </div>
+        </div>
     </div>
-    <div id="score-display">得分: <span id="score">0</span></div>
     <div id="message"></div>
-    <div id="keyboard">
-        <div>
-            <div class="pad-label">十位</div>
-            <div class="number-pad" id="tens-pad">
-                <button class="number-btn" onclick="appendNumber(1)">1</button>
-                <button class="number-btn" onclick="appendNumber(2)">2</button>
-                <button class="number-btn" onclick="appendNumber(3)">3</button>
-                <button class="number-btn" onclick="appendNumber(4)">4</button>
-                <button class="number-btn" onclick="appendNumber(5)">5</button>
-                <button class="number-btn" onclick="appendNumber(6)">6</button>
-                <button class="number-btn" onclick="appendNumber(7)">7</button>
-                <button class="number-btn" onclick="appendNumber(8)">8</button>
-                <button class="number-btn" onclick="appendNumber(9)">9</button>
-                <button class="number-btn" onclick="appendNumber(0)">0</button>
-            </div>
-        </div>
-        <div>
-            <div class="pad-label">個位</div>
-            <div class="number-pad" id="units-pad">
-                <button class="number-btn" onclick="appendNumber(1)">1</button>
-                <button class="number-btn" onclick="appendNumber(2)">2</button>
-                <button class="number-btn" onclick="appendNumber(3)">3</button>
-                <button class="number-btn" onclick="appendNumber(4)">4</button>
-                <button class="number-btn" onclick="appendNumber(5)">5</button>
-                <button class="number-btn" onclick="appendNumber(6)">6</button>
-                <button class="number-btn" onclick="appendNumber(7)">7</button>
-                <button class="number-btn" onclick="appendNumber(8)">8</button>
-                <button class="number-btn" onclick="appendNumber(9)">9</button>
-                <button class="number-btn" onclick="appendNumber(0)">0</button>
-            </div>
-        </div>
-    </div>
-
-    <canvas id="fireworks"></canvas>
+    <div id="fireworks"></div>
 
     <script>
         let score = 0;
-        let correctAnswer;
-        let startTime;
-        let wrongAttempts = 0;
+        let wrongCount = 0;
+        let answer = 0;
+        let selectedTens = null;
+        let selectedUnits = null;
+        let startTime = new Date();
 
-        function generateProblem() {
-            if (score === 0) startTime = new Date().getTime();
-            if (score >= 10) return;
+        function generateQuestion() {
+            const num1 = Math.floor(Math.random() * 99) + 1;
+            const num2 = Math.floor(Math.random() * 99) + 1;
+            const isAddition = Math.random() > 0.5;
             
-            let num1, num2, operator;
-            if (Math.random() < 0.5) {
-                num1 = Math.floor(Math.random() * 13) + 1;
-                num2 = Math.floor(Math.random() * (25 - num1 + 1)) + 1;
-                operator = '+';
-                correctAnswer = num1 + num2;
+            if (isAddition) {
+                const tens1 = Math.floor(num1 / 10);
+                const units1 = num1 % 10;
+                const tens2 = Math.floor(num2 / 10);
+                const units2 = num2 % 10;
+                if ((units1 + units2 >= 10) || (tens1 + tens2 >= 10)) {
+                    return generateQuestion();
+                }
+                answer = num1 + num2;
+                document.getElementById('question').textContent = `${num1} + ${num2} = ?`;
             } else {
-                num1 = Math.floor(Math.random() * 25) + 1;
-                num2 = Math.floor(Math.random() * num1) + 1;
-                operator = '-';
-                correctAnswer = num1 - num2;
+                if (num1 < num2 || (num1 % 10 < num2 % 10)) {
+                    return generateQuestion();
+                }
+                answer = num1 - num2;
+                document.getElementById('question').textContent = `${num1} - ${num2} = ?`;
             }
-            
-            document.getElementById('problem').textContent = `${num1} ${operator} ${num2} = ?`;
-            document.getElementById('answer').value = '';
+            wrongCount = 0;
+            clearInput();
             document.getElementById('message').textContent = '';
-            wrongAttempts = 0;
         }
 
-        function appendNumber(num) {
-            if (score >= 10) return;
-            const answerInput = document.getElementById('answer');
-            let currentValue = answerInput.value;
-            if (currentValue.length < 2) {
-                answerInput.value = currentValue + num;
+        function setNumber(type, num) {
+            const buttons = document.getElementById(type).getElementsByClassName('number-btn');
+            const input = document.getElementById('answerInput');
+            
+            if (type === 'tens') {
+                if (selectedTens === num) {
+                    selectedTens = null;
+                    Array.from(buttons).find(btn => btn.textContent === num.toString()).classList.remove('selected');
+                } else {
+                    if (selectedTens !== null) {
+                        Array.from(buttons).find(btn => btn.textContent === selectedTens.toString()).classList.remove('selected');
+                    }
+                    selectedTens = num;
+                    Array.from(buttons).find(btn => btn.textContent === num.toString()).classList.add('selected');
+                }
+            } else {
+                if (selectedUnits === num) {
+                    selectedUnits = null;
+                    Array.from(buttons).find(btn => btn.textContent === num.toString()).classList.remove('selected');
+                } else {
+                    if (selectedUnits !== null) {
+                        Array.from(buttons).find(btn => btn.textContent === selectedUnits.toString()).classList.remove('selected');
+                    }
+                    selectedUnits = num;
+                    Array.from(buttons).find(btn => btn.textContent === num.toString()).classList.add('selected');
+                }
             }
+            
+            const tens = selectedTens !== null ? selectedTens.toString() : '';
+            const units = selectedUnits !== null ? selectedUnits.toString() : '';
+            input.value = tens + units;
+        }
+
+        function clearInput() {
+            const tensButtons = document.getElementById('tens').getElementsByClassName('number-btn');
+            const unitsButtons = document.getElementById('units').getElementsByClassName('number-btn');
+            
+            for (let btn of tensButtons) {
+                btn.classList.remove('selected');
+            }
+            for (let btn of unitsButtons) {
+                btn.classList.remove('selected');
+            }
+            
+            selectedTens = null;
+            selectedUnits = null;
+            document.getElementById('answerInput').value = '';
         }
 
         function checkAnswer() {
-            if (score >= 10) return;
-            
-            const userAnswer = parseInt(document.getElementById('answer').value);
-            if (userAnswer === correctAnswer) {
-                score++;
-                document.getElementById('score').textContent = score;
-                if (score < 10) {
-                    generateProblem();
+            const userAnswer = parseInt(document.getElementById('answerInput').value) || 0;
+            const isSingleDigitAnswer = answer < 10;
+
+            if (isSingleDigitAnswer) {
+                if (selectedTens === null && selectedUnits === answer) {
+                    score++;
+                    document.getElementById('score').textContent = `得分: ${score}`;
+                    if (score === 10) {
+                        endGame();
+                    } else {
+                        generateQuestion();
+                    }
                 } else {
-                    const endTime = new Date().getTime();
-                    const timeUsed = ((endTime - startTime) / 1000).toFixed(1);
-                    const completionMessage = document.getElementById('completion-message');
-                    completionMessage.textContent = `恭喜完成，共用時 ${timeUsed} 秒`;
-                    completionMessage.style.display = 'block';
-                    showFireworks();
+                    wrongCount++;
+                    document.getElementById('message').textContent = `你答錯了${wrongCount}次，請重試`;
+                    clearInput();
                 }
             } else {
-                wrongAttempts++;
-                document.getElementById('message').textContent = 
-                    `答錯 ${wrongAttempts} 次，請再試一下`;
-                document.getElementById('answer').value = '';
-            }
-        }
-
-        function showFireworks() {
-            const canvas = document.getElementById('fireworks');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            class Particle {
-                constructor(x, y) {
-                    this.x = x;
-                    this.y = y;
-                    this.size = Math.random() * 5 + 1;
-                    this.speedX = Math.random() * 3 - 1.5;
-                    this.speedY = Math.random() * 3 - 1.5;
-                    this.life = 100;
-                    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                }
-
-                update() {
-                    this.x += this.speedX;
-                    this.y += this.speedY;
-                    this.life--;
-                }
-
-                draw() {
-                    ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            let particles = [];
-            
-            function createExplosion(x, y) {
-                for (let i = 0; i < 50; i++) {
-                    particles.push(new Particle(x, y));
-                }
-            }
-
-            function animate() {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                if (Math.random() < 0.1) {
-                    createExplosion(
-                        Math.random() * canvas.width,
-                        Math.random() * canvas.height
-                    );
-                }
-
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    particles[i].update();
-                    particles[i].draw();
-                    
-                    if (particles[i].life <= 0) {
-                        particles.splice(i, 1);
+                if (userAnswer === answer) {
+                    score++;
+                    document.getElementById('score').textContent = `得分: ${score}`;
+                    if (score === 10) {
+                        endGame();
+                    } else {
+                        generateQuestion();
                     }
+                } else {
+                    wrongCount++;
+                    document.getElementById('message').textContent = `你答錯了${wrongCount}次，請重試`;
+                    clearInput();
                 }
-
-                requestAnimationFrame(animate);
             }
-
-            animate();
         }
 
-        // 開始第一道題目
-        generateProblem();
+        function endGame() {
+            const endTime = new Date();
+            const timeDiff = (endTime - startTime) / 1000;
+            const fireworks = document.getElementById('fireworks');
+            fireworks.style.display = 'block';
+            fireworks.textContent = `恭喜完成，共用時${Math.round(timeDiff)}秒`;
+            
+            setInterval(() => {
+                const spark = document.createElement('div');
+                spark.style.position = 'absolute';
+                spark.style.left = Math.random() * 100 + '%';
+                spark.style.top = Math.random() * 100 + '%';
+                spark.style.width = '10px';
+                spark.style.height = '10px';
+                spark.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                spark.style.borderRadius = '50%';
+                fireworks.appendChild(spark);
+                setTimeout(() => spark.remove(), 1000);
+            }, 100);
+        }
+
+        generateQuestion();
     </script>
 </body>
 </html>
