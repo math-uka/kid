@@ -129,13 +129,26 @@
             });
         }
 
-        // 初始化時加載語音
+        // 初始化時加載語音並檢查 LocalStorage
         window.onload = () => {
             loadVoices();
+            loadPreviousInput(); // 頁面載入時顯示上次的輸入
         };
+
+        // 從 LocalStorage 載入之前的輸入
+        function loadPreviousInput() {
+            const savedInput = localStorage.getItem('savedInputText');
+            if (savedInput) {
+                document.getElementById('inputText').value = savedInput;
+                generateTable(); // 自動生成表格
+            }
+        }
 
         function generateTable() {
             const input = document.getElementById('inputText').value;
+            // 保存輸入到 LocalStorage
+            localStorage.setItem('savedInputText', input);
+
             // 使用正則表達式分隔，保留問號和感嘆號
             wordsArray = input.split(/(?<=[.。]|[!?！])/).map(item => item.trim()).filter(item => item !== '');
             
